@@ -4,7 +4,6 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-	<meta http-equiv="Access-Control-Allow-Origin" content="*" />
     <title>Scratch 專案列表</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.0.0/superhero/bootstrap.css" media="screen">
@@ -28,7 +27,7 @@
         // 參數
         var url = new URL(location);
 
-        // 使用者名稱 cl106001
+        // 使用者名稱 twchps50101
         var username = url.searchParams.get('username');
 
         // 使用者名稱中的「前綴字樣」
@@ -36,16 +35,19 @@
         // twchps5  + [ 01,  02,  03,  04]
         // twchps50 + [  1,   2,   3,   4]
         var prefix = url.searchParams.get('prefix');
-        prefix = prefix ? prefix : 'cl';
+        prefix = prefix ? prefix : 'twchps50';
 
-        // 使用者名稱中的「學年字樣」
-        var years = url.searchParams.get('years');
-        years = years ? years : '104,105,106';
+        // 使用者名稱中的「班級字樣」
+        // [501, 502, 503, 504]
+        // [ 01,  02,  03,  04]
+        // [  1,   2,   3,   4]
+        var classes = url.searchParams.get('classes');
+        classes = classes ? classes : '1,2,3,4';
 
         // 使用者名稱中的「編號字樣」
-        // 1 ~ 150
+        // 30 即 1 ~ 30
         var count = url.searchParams.get('count');
-        count = new Number(count ? count : '150');
+        count = new Number(count ? count : '30');
 
         // 篩選出特定的專案名稱 (共同 Remix 的樹根)
         var root = url.searchParams.get('root');
@@ -54,13 +56,13 @@
 
         function update_scratch(username, offset, limit) {
             $.ajax({
-                url: "https://api.scratch.mit.edu/users/" + username + "/projects",
-                dataType: "json",
-                data: {
+                // lyshie_20181128: 使用 CORS proxy，避免 CORS 問題。
+                url: "https://scratch.chps.tn.edu.tw/https://api.scratch.mit.edu/users/" + username + "/projects?" + $.param({
                     offset: offset,
                     limit: limit,
                     format: "json"
-                },
+                }),
+                dataType: "json",
                 success: function(response) {
                     if (response && response.length > 0) {
                         $.each(response, function(key, item) {
@@ -77,16 +79,9 @@
                             if (mod > current) {
                                 hot = true;
                             }
-							//專案下載
-							var projectdownload = $('<a target="_blank">');
-							$(projectdownload).text("查看專案");
-							$(projectdownload).attr({
-								"href": "https://isharewiki.github.io/#" + item.id
-							});
 
-							
                             // 縮圖
-                            var thumb = $('<img class="downloadable lazy align-self-center border border-primary">');
+                            var thumb = $('<img class="lazy align-self-center border border-primary">');
                             $(thumb).attr({
                                 "data-src": item.image,
                                 "width": "128",
@@ -121,21 +116,11 @@
                                 "href": "https://scratch.mit.edu/projects/" + item.id + "/#editor"
                             }).text('編輯專案');
 
-                            var scratch3 = $('<a class="dropdown-item" target="_blank">');
-                            $(scratch3).attr({
-                                "href": "https://beta.scratch.mit.edu/#" + item.id
-                            }).append($('<img src="https://beta.scratch.mit.edu/static/favicon.ico" width="16">'), ' Scratch 3');
+                            var code = $('<a class="dropdown-item" target="_blank">');
+                            $(code).attr({
+                                "href": "https://scratch.chps.tn.edu.tw/" + item.id
+                            }).text('文字程式');
 
-                            var getsb2 = $('<a class="dropdown-item" target="_blank">');
-                            $(getsb2).attr({
-                                "href": "http://getsb2.herokuapp.com/" + item.id
-                            }).text('下載專案');
-
-							var getscreenshot = $('<a class="dropdown-item" target="_blank">');
-                            $(getscreenshot).attr({
-                                "href": "https://cdn2.scratch.mit.edu/get_image/project/" + item.id + "_480x360.png"
-                            }).text('下載截圖');
-							
                             var sulfurous = $('<a class="dropdown-item" target="_blank">');
                             $(sulfurous).attr({
                                 "href": "https://sulfurous.aau.at/html/app.html?id=" + item.id + "&full-screen=true"
@@ -171,13 +156,13 @@
                             $(div).append(thumb).append(
                                 $('<div class="media-body">').append(title, user,
                                     views, loves, favorites,
-                                    $('<p class="m-0 p-0">').append(projectdownload,
+                                    $('<p class="m-0 p-0">').append(
                                         // dropdown menu
                                         $('<div class="dropdown">').append(
-                                            $('<button class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">').text('其它選項')
+                                            $('<button class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">').text('選項')
                                         ).append(
                                             $('<div class="dropdown-menu">').append(
-                                                getsb2, getscreenshot, fullscreen, editor, scratch3, sulfurous, phosphorus, fork, project
+                                                fullscreen, editor, code, sulfurous, phosphorus, fork, project
                                             )
                                         )
                                     )
@@ -199,14 +184,13 @@
             if (username) { // 指定使用者
                 update_scratch(username, 0, 40);
             } else {
-                // cl104001 ~ 106150
-                // {prefix} + {item_years} + {num}
+                // 進學國小 twchps50101 ~ 50430
+                // {prefix} + {item_class} + {num}
                 // twchps50   1              01
-                $.each(years.split(/\s*,\s*/), function(key_class, item_years) {
+                $.each(classes.split(/\s*,\s*/), function(key_class, item_class) {
                     for (var n = 1; n <= count; n++) {
-						var num = (n < 100) ? '0' + n : n;
-                        var num = (n < 10) ? '00' + n : n;
-                        update_scratch(prefix + item_years + num, 0, 40);
+                        var num = (n < 10) ? '0' + n : n;
+                        update_scratch(prefix + item_class + num, 0, 40);
                     }
                 });
             }
@@ -215,6 +199,7 @@
             $(document).ajaxStop(function() {
                 // 排序
                 tinysort($('#scratch>div'), '.x-username', '.x-project');
+
                 // lazy load images
                 $('.lazy').Lazy();
             });
