@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Scratch 專案列表</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.0.0/superhero/bootstrap.css" media="screen">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row" id="scratch">
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tinysort/2.3.6/tinysort.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tinysort/2.3.6/jquery.tinysort.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.6/jquery.lazy.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.6/jquery.lazy.plugins.min.js"></script>
+    <script type="text/javascript">
+        // 參數
+        var url = new URL(location);
+
+        // 使用者名稱 twchps50101
+        var id = url.searchParams.get('id');
+
+        // 使用者名稱中的「前綴字樣」
+        // twchps   + [501, 502, 503, 504]
+        // twchps5  + [ 01,  02,  03,  04]
+        // twchps50 + [  1,   2,   3,   4]
+        var prefix = url.searchParams.get('prefix');
+        prefix = prefix ? prefix : 'twchps50';
+
+        // 使用者名稱中的「班級字樣」
+        // [501, 502, 503, 504]
+        // [ 01,  02,  03,  04]
+        // [  1,   2,   3,   4]
+        var classes = url.searchParams.get('classes');
+        classes = classes ? classes : '1,2,3,4';
+
+        // 使用者名稱中的「編號字樣」
+        // 30 即 1 ~ 30
+        var count = url.searchParams.get('count');
+        count = new Number(count ? count : '30');
+
+        // 篩選出特定的專案名稱 (共同 Remix 的樹根)
+        var root = url.searchParams.get('root');
+        root = root ? root : '.*';
+        var regexp_root = new RegExp(root, "g");
+
+        function update_scratch(id, offset, limit) {
+            $.ajax({
+                // lyshie_20181128: 使用 CORS proxy，避免 CORS 問題。
+                url: "https://api.scratch.mit.edu/studios/" + id + "/projects?" + $.param({
+                    offset: offset,
+                    limit: limit,
+                    format: "json"
+                }),
+                dataType: "json",
+                success: function(response) {
+                    if (response && response.length > 0) {
+                        $.each(response, function(key, item) {
+                            console.log(offset);
+
+                            // 篩選出共同 Remix 的樹根
+
+                            // 修改時間 (五天內修改的作品最熱門，些微時間誤差不考慮)
+                            var hot = false;
+                            var current = moment().subtract(5, 'days');
+
+
+                            // 縮圖
+                            var thumb = $('<img class="lazy align-self-center border border-primary">');
+                            $(thumb).attr({
+                                "data-src": item.image,
+                                "width": "128",
+                                "data-toggle": "tooltip",
+                                "title": item.title
+                            }).tooltip();
+
+                            // 專案標題
+                            var title = $('<h6>');
+                            $(title).text(item.title);
+
+                            // 作者
+                            var user;
+                            if (hot) {
+                                user = $('<a class="x-username btn btn-warning btn-sm" target="_blank">');
+                            } else {
+                                user = $('<a class="x-username btn btn-info btn-sm" target="_blank">');
+                            }
+
+                            $(user).attr({
+                                'href': '?id=' + id
+                            }).text(id);
+
+                            // 專案連結
+                            var fullscreen = $('<a class="x-project dropdown-item" target="_blank">');
+                            $(fullscreen).attr({
+                                "href": "https://scratch.mit.edu/projects/" + item.id + "/#fullscreen"
+                            }).text('全螢幕開啟');
+
+                            var editor = $('<a class="dropdown-item" target="_blank">');
+                            $(editor).attr({
+                                "href": "https://scratch.mit.edu/projects/" + item.id + "/#editor"
+                            }).text('編輯專案');
+
+                            var code = $('<a class="dropdown-item" target="_blank">');
+                            $(code).attr({
+                                "href": "https://sitehowhowone.github.io/" + item.id
+                            }).text('文字程式');
+
+                            var sulfurous = $('<a class="dropdown-item" target="_blank">');
+                            $(sulfurous).attr({
+                                "href": "https://sulfurous.aau.at/html/app.html?id=" + item.id + "&full-screen=true"
+                            }).text('Sulfurous');
+
+                            var phosphorus = $('<a class="dropdown-item" target="_blank">');
+                            $(phosphorus).attr({
+                                "href": "https://phosphorus.github.io/app.html?id=" + item.id + "&full-screen=true"
+                            }).text('Phosphorus');
+
+                            // 統計資訊
+
+
+
+
+                            var fork = $('<a class="dropdown-item" target="_blank">');
+                            $(fork).attr({
+                                "href": "fork.html?project=" + item.id
+                            }).text('改編樹');
+
+                            var project = $('<a class="dropdown-item" target="_blank">');
+                            $(project).attr({
+                                "href": "project.html?project=" + item.id
+                            }).text('比對程式');
+
+                            // 專案
+                            var div = $('<div class="media col-sm-6 col-md-4">');
+                            $(div).append(thumb).append(
+                                $('<div class="media-body">').append(title, user,
+                                    
+                                    $('<p class="m-0 p-0">').append(
+                                        // dropdown menu
+                                        $('<div class="dropdown">').append(
+                                            $('<button class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">').text('選項')
+                                        ).append(
+                                            $('<div class="dropdown-menu">').append(
+                                                fullscreen, editor, code, sulfurous, phosphorus, fork, project
+                                            )
+                                        )
+                                    )
+                                )
+                            );
+
+                            // 加入一筆專案
+                            $("#scratch").append(div);
+                        });
+
+                        // 查詢下一頁
+                        update_scratch(username, offset + limit, limit);
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            if (id) { // 指定使用者
+                update_scratch(id, 0, 40);
+            } else {
+                // 進學國小 twchps50101 ~ 50430
+                // {prefix} + {item_class} + {num}
+                // twchps50   1              01
+                $.each(classes.split(/\s*,\s*/), function(key_class, item_class) {
+                    for (var n = 1; n <= count; n++) {
+                        var num = (n < 10) ? '0' + n : n;
+                        update_scratch(prefix + item_class + num, 0, 40);
+                    }
+                });
+            }
+
+            // 最後全部載入
+            $(document).ajaxStop(function() {
+                // 排序
+                tinysort($('#scratch>div'), '.x-username', '.x-project');
+
+                // lazy load images
+                $('.lazy').Lazy();
+            });
+        });
+    </script>
+</body>
+
+</html>
