@@ -57,7 +57,7 @@
         function update_scratch(username, offset, limit) {
             $.ajax({
                 // lyshie_20181128: 使用 CORS proxy，避免 CORS 問題。
-                url: "https://sitehowhowone.github.io/https://api.scratch.mit.edu/users/" + username + "/projects?" + $.param({
+                url: "https://api.scratch.mit.edu/users/" + username + "/projects?" + $.param({
                     offset: offset,
                     limit: limit,
                     format: "json"
